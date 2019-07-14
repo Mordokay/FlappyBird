@@ -81,12 +81,12 @@ class FlappyBird: UIViewController {
   
   let handIconImage: UIImageView = {
     let view = UIImageView()
-    view.sizeToFit()
     view.contentMode = .scaleAspectFit
     view.tintColor = #colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
     view.transform = CGAffineTransform(rotationAngle: -CGFloat.pi / 2)
-    let homeSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 55, weight: .heavy)
-    view.image = UIImage(systemName: "hand.point.right.fill", withConfiguration: homeSymbolConfiguration)
+    view.image = #imageLiteral(resourceName: "hand").withRenderingMode(.alwaysTemplate)
+//    let homeSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 55, weight: .heavy)
+//    view.image = UIImage(systemName: "hand.point.right.fill", withConfiguration: homeSymbolConfiguration)
     view.translatesAutoresizingMaskIntoConstraints = false
     return view
   }()
@@ -101,11 +101,11 @@ class FlappyBird: UIViewController {
   
   let arrowUp: UIImageView = {
     let view = UIImageView()
-    view.sizeToFit()
     view.contentMode = .scaleAspectFit
     view.tintColor = #colorLiteral(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
-    let homeSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 30, weight: .heavy)
-    view.image = UIImage(systemName: "arrowtriangle.up.fill", withConfiguration: homeSymbolConfiguration)
+    view.image = #imageLiteral(resourceName: "Triangle").withRenderingMode(.alwaysTemplate)
+//    let homeSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 30, weight: .heavy)
+//    view.image = UIImage(systemName: "arrowtriangle.up.fill", withConfiguration: homeSymbolConfiguration)
     view.translatesAutoresizingMaskIntoConstraints = false
     return view
   }()
@@ -428,12 +428,12 @@ class FlappyBird: UIViewController {
   
   let playButtonImage: UIImageView = {
     let view = UIImageView()
-    view.sizeToFit()
     view.isUserInteractionEnabled = true
     view.contentMode = .scaleAspectFit
     view.tintColor = #colorLiteral(red: 0.2688185086, green: 0.7338396256, blue: 0.2862071538, alpha: 1)
-    let homeSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 60, weight: .heavy)
-    view.image = UIImage(systemName: "arrowtriangle.up.fill", withConfiguration: homeSymbolConfiguration)
+    view.image = #imageLiteral(resourceName: "Triangle").withRenderingMode(.alwaysTemplate)
+//    let homeSymbolConfiguration = UIImage.SymbolConfiguration(pointSize: 60, weight: .heavy)
+//    view.image = UIImage(systemName: "arrowtriangle.up.fill", withConfiguration: homeSymbolConfiguration)
     view.transform = CGAffineTransform(rotationAngle: CGFloat.pi / 2)
     view.translatesAutoresizingMaskIntoConstraints = false
     return view
@@ -903,6 +903,8 @@ class FlappyBird: UIViewController {
       
       playButtonImage.centerYAnchor.constraint(equalTo: playAgainButton.centerYAnchor),
       playButtonImage.centerXAnchor.constraint(equalTo: playAgainButton.centerXAnchor),
+      playButtonImage.widthAnchor.constraint(equalToConstant: relativeWidth(60)),
+      playButtonImage.heightAnchor.constraint(equalToConstant: relativeWidth(60)),
       
       getReadyLabel.centerXAnchor.constraint(equalTo: startView.centerXAnchor),
       getReadyLabel.topAnchor.constraint(equalTo: startView.topAnchor, constant: relativeHeight(50)),
@@ -935,6 +937,8 @@ class FlappyBird: UIViewController {
       
       arrowUp.centerXAnchor.constraint(equalTo: view.centerXAnchor),
       arrowUp.centerYAnchor.constraint(equalTo: getReadyLabel.bottomAnchor, constant: relativeHeight(140)),
+      arrowUp.widthAnchor.constraint(equalToConstant: relativeWidth(30)),
+      arrowUp.heightAnchor.constraint(equalToConstant: relativeWidth(30)),
 
       grayedStartBird.centerXAnchor.constraint(equalTo: view.centerXAnchor),
       grayedStartBird.centerYAnchor.constraint(equalTo: getReadyLabel.bottomAnchor, constant: relativeHeight(70)),
