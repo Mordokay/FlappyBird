@@ -10,11 +10,16 @@ import UIKit
 import AudioToolbox
 
 class FlappyBird: UIViewController {
-
+  
+  var displayLink: CADisplayLink!
   var scoreSound: SystemSoundID = 0
   var wingFlapSound: SystemSoundID = 1
   var hitObstacleSound: SystemSoundID = 2
   
+  var lastVelocity: CGFloat = 0
+  
+  let minBirdAngle = -CGFloat.pi / 4
+  let maxBirdAngle = CGFloat.pi / 3
   var highScore: Int {
     get {
       return UserDefaults.standard.integer(forKey: "highScore")
@@ -27,13 +32,53 @@ class FlappyBird: UIViewController {
   let bird: UIView = {
     let view = UIView()
     view.accessibilityLabel = "BIRD"
-    view.backgroundColor = #colorLiteral(red: 0.9372549057, green: 0.3490196168, blue: 0.1921568662, alpha: 1)
-    view.layer.borderColor = #colorLiteral(red: 0.521568656, green: 0.1098039225, blue: 0.05098039284, alpha: 1)
+    view.backgroundColor = #colorLiteral(red: 0.4666666687, green: 0.7647058964, blue: 0.2666666806, alpha: 1)
+    return view
+  }()
+  
+  let birdBorder: UIView = {
+    let view = UIView()
+    view.translatesAutoresizingMaskIntoConstraints = false
+    view.layer.borderColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
     view.layer.borderWidth = 2
-    view.clipsToBounds = true
     return view
   }()
 
+  let birdEye: UIView = {
+    let view = UIView()
+    view.backgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
+    view.layer.borderColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+    view.layer.borderWidth = 2
+    view.translatesAutoresizingMaskIntoConstraints = false
+    return view
+  }()
+  
+  let birdSmallerEye: UIView = {
+    let view = UIView()
+    view.backgroundColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+    view.translatesAutoresizingMaskIntoConstraints = false
+    return view
+  }()
+  
+  let birdWing: UIView = {
+    let view = UIView()
+    view.backgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
+    view.layer.borderColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+    view.layer.borderWidth = 2
+    view.translatesAutoresizingMaskIntoConstraints = false
+    view.transform = CGAffineTransform(rotationAngle: CGFloat.pi / 10)
+    return view
+  }()
+  
+  let birdMouth: UIView = {
+    let view = UIView()
+    view.backgroundColor = #colorLiteral(red: 0.9372549057, green: 0.3681130481, blue: 0, alpha: 1)
+    view.layer.borderColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+    view.layer.borderWidth = 2
+    view.translatesAutoresizingMaskIntoConstraints = false
+    return view
+  }()
+  
   let handIconImage: UIImageView = {
     let view = UIImageView()
     view.sizeToFit()
@@ -70,11 +115,51 @@ class FlappyBird: UIViewController {
     let view = UIView()
     view.accessibilityLabel = "grayedStartBird"
     view.translatesAutoresizingMaskIntoConstraints = false
-    view.backgroundColor = #colorLiteral(red: 0.8039215803, green: 0.8039215803, blue: 0.8039215803, alpha: 1)
-    view.layer.borderColor = #colorLiteral(red: 0.501960814, green: 0.501960814, blue: 0.501960814, alpha: 1)
-    view.layer.borderWidth = 2
+    view.backgroundColor = #colorLiteral(red: 0.6000000238, green: 0.6000000238, blue: 0.6000000238, alpha: 1)
     view.transform = CGAffineTransform(rotationAngle: -CGFloat.pi / 6)
-    view.clipsToBounds = true
+
+    return view
+  }()
+  
+  let grayedBirdBorder: UIView = {
+    let view = UIView()
+    view.translatesAutoresizingMaskIntoConstraints = false
+    view.layer.borderColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+    view.layer.borderWidth = 2
+    return view
+  }()
+  
+  let grayedBirdEye: UIView = {
+    let view = UIView()
+    view.backgroundColor = #colorLiteral(red: 0.8039215803, green: 0.8039215803, blue: 0.8039215803, alpha: 1)
+    view.layer.borderColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+    view.layer.borderWidth = 2
+    view.translatesAutoresizingMaskIntoConstraints = false
+    return view
+  }()
+  
+  let grayedBirdSmallerEye: UIView = {
+    let view = UIView()
+    view.backgroundColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+    view.translatesAutoresizingMaskIntoConstraints = false
+    return view
+  }()
+  
+  let grayedBirdWing: UIView = {
+    let view = UIView()
+    view.backgroundColor = #colorLiteral(red: 0.8039215803, green: 0.8039215803, blue: 0.8039215803, alpha: 1)
+    view.layer.borderColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+    view.layer.borderWidth = 2
+    view.translatesAutoresizingMaskIntoConstraints = false
+    return view
+  }()
+  
+  let grayedBirdMouth: UIView = {
+    let view = UIView()
+    view.backgroundColor = #colorLiteral(red: 0.3279068845, green: 0.2628149137, blue: 0.2719131131, alpha: 1)
+    view.layer.borderColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 1)
+    view.layer.borderWidth = 2
+    view.translatesAutoresizingMaskIntoConstraints = false
     return view
   }()
   
@@ -126,7 +211,7 @@ class FlappyBird: UIViewController {
     let views = [UIView(), UIView(), UIView(), UIView(), UIView(), UIView(), UIView(), UIView()]
     for view in views {
       view.accessibilityLabel = "Debug collider"
-      view.backgroundColor = #colorLiteral(red: 0.8078431487, green: 0.02745098062, blue: 0.3333333433, alpha: 1)
+      //view.backgroundColor = #colorLiteral(red: 0.8078431487, green: 0.02745098062, blue: 0.3333333433, alpha: 1)
       view.frame.size = CGSize(width: 3, height: 3)
     }
     return views
@@ -374,6 +459,12 @@ class FlappyBird: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
     
+    displayLink = CADisplayLink(
+      target: self,
+      selector: #selector(updateBirdRotation)
+    )
+    displayLink.add(to: .main, forMode: .default)
+
     let coinSoundURL = NSURL(fileURLWithPath: Bundle.main.path(forResource: "sfx_point", ofType: "wav")!)
     AudioServicesCreateSystemSoundID(coinSoundURL, &self.scoreSound)
     
@@ -413,9 +504,30 @@ class FlappyBird: UIViewController {
     setupPipes()
 
     view.addSubview(bird)
-    resetBird()
+    bird.addSubview(birdBorder)
+    birdBorder.accessibilityLabel = "birdBorder"
+    bird.addSubview(birdMouth)
+    birdMouth.accessibilityLabel = "birdMouth"
+    bird.addSubview(birdEye)
+    birdEye.accessibilityLabel = "birdEye"
+    bird.addSubview(birdSmallerEye)
+    birdSmallerEye.accessibilityLabel = "birdEye"
+    bird.addSubview(birdWing)
+    birdWing.accessibilityLabel = "birdWing"
+    UIView.animate(withDuration: 0.2, delay: 0, options: [.repeat, .autoreverse], animations: {
+      self.birdWing.center = CGPoint(x: self.birdWing.center.x, y: self.birdWing.center.y + self.relativeHeight(6))
+      self.birdWing.transform = CGAffineTransform(rotationAngle: -CGFloat.pi / 10)
+    })
     
     bird.layer.cornerRadius = relativeWidth(18)
+    birdEye.layer.cornerRadius = relativeWidth(7)
+    birdSmallerEye.layer.cornerRadius = relativeWidth(2)
+    birdBorder.layer.cornerRadius = relativeWidth(18)
+    birdWing.layer.cornerRadius = relativeWidth(10)
+    birdMouth.layer.cornerRadius = relativeWidth(7)
+    
+    resetBird()
+    
     grayedStartBird.layer.cornerRadius = relativeWidth(18)
 
     view.addSubview(groundBottom)
@@ -462,6 +574,7 @@ class FlappyBird: UIViewController {
     animator.addBehavior(mapColliderBehavior)
 
     birdBehavior = UIDynamicItemBehavior(items: [bird])
+    birdBehavior.allowsRotation = false
     animator.addBehavior(birdBehavior)
     
     collisionBehavior.collisionDelegate = self
@@ -532,6 +645,9 @@ class FlappyBird: UIViewController {
             if frame.contains(point) && !self.scoreIncrementOnCooldown {
               self.scoreIncrementOnCooldown = true
               self.scoreCount += 1
+              
+              self.scoreBox[i].setTripleHorizontalGradient(startColor: #colorLiteral(red: 0.01148293132, green: 1, blue: 0.07333269911, alpha: 1).withAlphaComponent(0), middleColor: #colorLiteral(red: 0.01148293132, green: 1, blue: 0.07333269911, alpha: 1).withAlphaComponent(0.15), endColor: #colorLiteral(red: 0.01148293132, green: 1, blue: 0.07333269911, alpha: 1).withAlphaComponent(0))
+              
               self.score.text = "\(self.scoreCount)"
               AudioServicesPlaySystemSound(self.scoreSound)
               DispatchQueue.main.asyncAfter(deadline: .now() + 1) { self.scoreIncrementOnCooldown = false
@@ -565,6 +681,22 @@ class FlappyBird: UIViewController {
     arrowBottom.layer.cornerRadius = relativeWidth(5)
     startView.addSubview(arrowUp)
     startView.addSubview(grayedStartBird)
+    grayedStartBird.addSubview(grayedBirdBorder)
+    grayedBirdBorder.accessibilityLabel = "grayedBirdBorder"
+    grayedStartBird.addSubview(grayedBirdMouth)
+    grayedBirdMouth.accessibilityLabel = "grayedBirdMouth"
+    grayedStartBird.addSubview(grayedBirdEye)
+    grayedBirdEye.accessibilityLabel = "grayedBirdEye"
+    grayedStartBird.addSubview(grayedBirdSmallerEye)
+    grayedBirdSmallerEye.accessibilityLabel = "grayedBirdSmallerEye"
+    grayedStartBird.addSubview(grayedBirdWing)
+    grayedBirdWing.accessibilityLabel = "grayedBirdWing"
+    
+    grayedBirdEye.layer.cornerRadius = relativeWidth(7)
+    grayedBirdSmallerEye.layer.cornerRadius = relativeWidth(2)
+    grayedBirdBorder.layer.cornerRadius = relativeWidth(18)
+    grayedBirdWing.layer.cornerRadius = relativeWidth(10)
+    grayedBirdMouth.layer.cornerRadius = relativeWidth(7)
     
     view.addSubview(gameoverView)
     gameoverView.addSubview(scoreLabel)
@@ -613,6 +745,20 @@ class FlappyBird: UIViewController {
     })
     
     setupLayouts()
+  }
+  
+  @objc func updateBirdRotation(displaylink: CADisplayLink) {
+    let velocityY = self.birdBehavior.linearVelocity(for: self.bird).y
+    let angularVelocity = self.birdBehavior.angularVelocity(for: bird)
+    let currentRotation = atan2f(Float(bird.transform.b), Float(bird.transform.a))
+    
+    if velocityY > 0 && CGFloat(currentRotation) < maxBirdAngle {
+      self.birdBehavior.addAngularVelocity(-angularVelocity + 4, for: bird)
+    } else if velocityY < 0  && CGFloat(currentRotation) > minBirdAngle{
+      self.birdBehavior.addAngularVelocity(-angularVelocity - 5, for: bird)
+    } else {
+      self.birdBehavior.addAngularVelocity(-angularVelocity, for: bird)
+    }
   }
   
   func stopEverythingExceptBird() {
@@ -669,11 +815,11 @@ class FlappyBird: UIViewController {
   
   @objc
   func resetGame() {
-    UIView.animate(withDuration: 1, animations: {
+    UIView.animate(withDuration: 0.5, animations: {
       self.view.alpha = 0
     })
     
-    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
       UIApplication.shared.keyWindow?.rootViewController = FlappyBird()
       UIApplication.shared.keyWindow?.makeKeyAndVisible()
     }
@@ -789,13 +935,61 @@ class FlappyBird: UIViewController {
       
       arrowUp.centerXAnchor.constraint(equalTo: view.centerXAnchor),
       arrowUp.centerYAnchor.constraint(equalTo: getReadyLabel.bottomAnchor, constant: relativeHeight(140)),
-//      arrowUp.widthAnchor.constraint(equalToConstant: relativeWidth(50)),
-//      arrowUp.heightAnchor.constraint(equalToConstant: relativeWidth(50)),
-      
+
       grayedStartBird.centerXAnchor.constraint(equalTo: view.centerXAnchor),
       grayedStartBird.centerYAnchor.constraint(equalTo: getReadyLabel.bottomAnchor, constant: relativeHeight(70)),
       grayedStartBird.widthAnchor.constraint(equalToConstant: relativeWidth(40)),
-      grayedStartBird.heightAnchor.constraint(equalToConstant: relativeWidth(36))
+      grayedStartBird.heightAnchor.constraint(equalToConstant: relativeWidth(36)),
+      
+      birdBorder.centerXAnchor.constraint(equalTo: bird.centerXAnchor),
+      birdBorder.centerYAnchor.constraint(equalTo: bird.centerYAnchor),
+      birdBorder.widthAnchor.constraint(equalToConstant: relativeWidth(40)),
+      birdBorder.heightAnchor.constraint(equalToConstant: relativeWidth(36)),
+      
+      birdEye.centerYAnchor.constraint(equalTo: bird.centerYAnchor, constant: -relativeWidth(5)),
+      birdEye.trailingAnchor.constraint(equalTo: bird.trailingAnchor, constant: relativeWidth(2)),
+      birdEye.widthAnchor.constraint(equalToConstant: relativeWidth(14)),
+      birdEye.heightAnchor.constraint(equalToConstant: relativeWidth(14)),
+      
+      birdSmallerEye.centerXAnchor.constraint(equalTo: birdEye.centerXAnchor, constant: relativeWidth(2)),
+      birdSmallerEye.centerYAnchor.constraint(equalTo: birdEye.centerYAnchor, constant: relativeWidth(1)),
+      birdSmallerEye.widthAnchor.constraint(equalToConstant: relativeWidth(4)),
+      birdSmallerEye.heightAnchor.constraint(equalToConstant: relativeWidth(4)),
+      
+      birdWing.centerYAnchor.constraint(equalTo: bird.centerYAnchor, constant: relativeWidth(5)),
+      birdWing.trailingAnchor.constraint(equalTo: bird.leadingAnchor, constant: relativeWidth(20)),
+      birdWing.widthAnchor.constraint(equalToConstant: relativeWidth(25)),
+      birdWing.heightAnchor.constraint(equalToConstant: relativeWidth(15)),
+      
+      birdMouth.centerYAnchor.constraint(equalTo: bird.centerYAnchor, constant: relativeWidth(5)),
+      birdMouth.trailingAnchor.constraint(equalTo: bird.trailingAnchor, constant: relativeWidth(6)),
+      birdMouth.widthAnchor.constraint(equalToConstant: relativeWidth(18)),
+      birdMouth.heightAnchor.constraint(equalToConstant: relativeWidth(10)),
+      
+      grayedBirdBorder.centerXAnchor.constraint(equalTo: grayedStartBird.centerXAnchor),
+      grayedBirdBorder.centerYAnchor.constraint(equalTo: grayedStartBird.centerYAnchor),
+      grayedBirdBorder.widthAnchor.constraint(equalToConstant: relativeWidth(40)),
+      grayedBirdBorder.heightAnchor.constraint(equalToConstant: relativeWidth(36)),
+      
+      grayedBirdEye.centerYAnchor.constraint(equalTo: grayedStartBird.centerYAnchor, constant: -relativeWidth(5)),
+      grayedBirdEye.trailingAnchor.constraint(equalTo: grayedStartBird.trailingAnchor, constant: relativeWidth(2)),
+      grayedBirdEye.widthAnchor.constraint(equalToConstant: relativeWidth(14)),
+      grayedBirdEye.heightAnchor.constraint(equalToConstant: relativeWidth(14)),
+      
+      grayedBirdSmallerEye.centerXAnchor.constraint(equalTo: grayedBirdEye.centerXAnchor, constant: relativeWidth(2)),
+      grayedBirdSmallerEye.centerYAnchor.constraint(equalTo: grayedBirdEye.centerYAnchor, constant: relativeWidth(1)),
+      grayedBirdSmallerEye.widthAnchor.constraint(equalToConstant: relativeWidth(4)),
+      grayedBirdSmallerEye.heightAnchor.constraint(equalToConstant: relativeWidth(4)),
+      
+      grayedBirdWing.centerYAnchor.constraint(equalTo: grayedStartBird.centerYAnchor, constant: relativeWidth(5)),
+      grayedBirdWing.trailingAnchor.constraint(equalTo: grayedStartBird.leadingAnchor, constant: relativeWidth(20)),
+      grayedBirdWing.widthAnchor.constraint(equalToConstant: relativeWidth(25)),
+      grayedBirdWing.heightAnchor.constraint(equalToConstant: relativeWidth(15)),
+      
+      grayedBirdMouth.centerYAnchor.constraint(equalTo: grayedStartBird.centerYAnchor, constant: relativeWidth(5)),
+      grayedBirdMouth.trailingAnchor.constraint(equalTo: grayedStartBird.trailingAnchor, constant: relativeWidth(6)),
+      grayedBirdMouth.widthAnchor.constraint(equalToConstant: relativeWidth(18)),
+      grayedBirdMouth.heightAnchor.constraint(equalToConstant: relativeWidth(10))
       ])
   }
 
@@ -888,6 +1082,9 @@ class FlappyBird: UIViewController {
   }
 
   func setPos(from pos: CGPoint, index: Int) {
+    
+    scoreBox[index].setTripleHorizontalGradient(startColor: #colorLiteral(red: 0.999493897, green: 0.9873333573, blue: 0.3798474073, alpha: 1).withAlphaComponent(0), middleColor: #colorLiteral(red: 0.999493897, green: 0.9873333573, blue: 0.3798474073, alpha: 1).withAlphaComponent(0.05), endColor: #colorLiteral(red: 0.999493897, green: 0.9873333573, blue: 0.3798474073, alpha: 1).withAlphaComponent(0))
+    
     obstacleTop[index].frame = CGRect(x: pos.x - relativeWidth(40), y: pos.y - relativeHeight(1500 + distanceBetwenPipes / 2), width: relativeWidth(80), height: relativeHeight(1500))
     obstacleBottom[index].frame = CGRect(x: pos.x - relativeWidth(40), y: pos.y + relativeHeight(distanceBetwenPipes / 2), width: relativeWidth(80), height: relativeHeight(1500))
     obstacleTipTop[index].frame = CGRect(x: pos.x - relativeWidth(45), y: pos.y - relativeHeight(20 + distanceBetwenPipes / 2), width: relativeWidth(90), height: relativeHeight(40))
@@ -898,7 +1095,6 @@ class FlappyBird: UIViewController {
   func addBirdAnimation () {
     UIView.animate(withDuration: 0.5, delay: 0, options: [.repeat, .autoreverse], animations: {
       self.bird.center = CGPoint(x: self.bird.center.x, y: self.bird.center.y + self.relativeHeight(8))
-    }, completion: { _ in
     })
   }
   
@@ -973,15 +1169,6 @@ class FlappyBird: UIViewController {
       self.startView.removeFromSuperview()
     })
   }
-  
-//  func showScoreScreen() {
-//    //TODO: Should set final score values and update Highscore if needed (UserDefaults)
-//
-//    //Toggles Score Screen
-//    UIView.animate(withDuration: 0.5, animations: {
-//      self.gameoverView.alpha = 1
-//    })
-//  }
   
   func addBirdGravity() {
     gravityBehavior.addItem(bird)

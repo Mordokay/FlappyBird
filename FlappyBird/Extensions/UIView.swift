@@ -85,6 +85,7 @@ extension UIView {
   }
   
   func setTripleHorizontalGradient(startColor: UIColor, middleColor: UIColor, endColor: UIColor) {
+    removeAllSubLayers()
     let gradientLayer: CAGradientLayer = CAGradientLayer()
     gradientLayer.frame.size = self.frame.size
     gradientLayer.colors = [startColor.cgColor, middleColor.cgColor, endColor.cgColor]
